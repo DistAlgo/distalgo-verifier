@@ -1,0 +1,29 @@
+#!/usr/bin/python3
+
+import sys
+import os.path as path
+
+binpath = sys.path[0]
+rootpath = path.dirname(path.abspath(binpath))
+sys.path.insert(0, rootpath)
+sys.path.insert(0, path.join(rootpath, "distalgo"))
+
+# Rename tlaplus to _tlaplus_temp and tlaplus_action to tlaplus
+from pathlib import Path
+dir_daverifier = Path('..')
+dir_target = dir_daverifier / 'verifier' / 'target'
+dir_tlaplus_temp = Path(dir_target / '_tlaplus_temp')
+dir_tlaplus = Path(dir_target / 'tlaplus')
+dir_tlaplus_action = Path(dir_target / 'tlaplus_action')
+dir_tlaplus.rename(dir_tlaplus_temp)
+dir_tlaplus_action.rename(dir_tlaplus)
+
+import verifier, traceback
+try:
+    verifier.main()
+except:
+    traceback.print_exc()
+finally:
+    # Undo renaming of tlaplus and tlaplus_action
+    dir_tlaplus.rename(dir_tlaplus_action)
+    dir_tlaplus_temp.rename(dir_tlaplus)
