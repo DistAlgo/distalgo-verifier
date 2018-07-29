@@ -207,7 +207,8 @@ def translate_insts_simple_one_block(top_exprs, insts, translator, skip_branch =
 
         if is_real_assign:
             exprs.append(except_expr_helper(name, target_expr))
-
+    
+    exprs.append(ExprTranslator.run(insts[0], rwtracker, translator))
     for inst in insts:
         if isinstance(inst, ir.Assign):
             expr = ExprTranslator.run(inst.expr, rwtracker, translator)
@@ -233,26 +234,6 @@ def translate_insts_simple_one_block(top_exprs, insts, translator, skip_branch =
                                                 [TlaSymbol("self"), message,
                                                 target, msgQ]))
         rwtracker.remove(inst)
-
-    if not skip_branch:
-        next_pc = None
-        if len(insts) > 0:
-            last_inst = insts[-1]
-            if isinstance(last_inst, ir.Branch):
-                next_block = last_inst.target_block
-                next_pc = except_expr_helper('pc', TlaConstantExpr(next_block.function.scope.gen_name(next_block.label)))
-            elif isinstance(last_inst, ir.CondBranch):
-                block1 = last_inst.target_block
-                block2 = last_inst.target_block_alt
-                block1_label = block1.function.scope.gen_name(block1.label)
-                block2_label = block2.function.scope.gen_name(block2.label)
-                cond_expr = ExprTranslator.run(last_inst.condition, rwtracker, translator)
-                expr = TlaIfExpr(cond_expr, TlaConstantExpr(block1_label), TlaConstantExpr(block2_label))
-                next_pc = except_expr_helper('pc', expr)
-        if next_pc is None:
-            next_pc = except_expr_helper('pc', TlaConstantExpr(next_name))
-        top_exprs.append(next_pc)
-
     return exprs
 
 # forward name declaration
@@ -263,7 +244,6 @@ class Action(object):
         self.next_name = next_name
 
     def from_end(self):
-
         ret_addr_name = self.block.function.scope.gen_name("ret_pc")
         exprs = [self.check_pc()]
         if self.block.label == "end" and self.block.function.ast_node.name == "run":
@@ -604,10 +584,29 @@ class Translator(object):
 
         return True
 
+    def is_subset_action(self, function : ir.Function):
+        #FIXME: Implement me.
+        return True
+    
     def translate_function(self, function):
-        for b in function.basicblocks:
-            actions = self.translate_basicblock(b)
+        def cur_name(block):
+            return block.function.scope.gen_name(block.label)
 
+        def general_action(block, insts):
+            action = Action(block, cur_name(block), None)
+            action.from_insts(insts, self)
+            Fill.run(action.tla, self.codegen)
+            self.codegen.defines.append(action.tla)
+
+        if self.is_subset_action(function):
+            insts = []
+            insts.append(function.basicblocks[0].ir[0].operands[0])
+            for inst in function.basicblocks[1].ir:
+                insts.append(inst)
+            general_action(function.basicblocks[0], insts)
+        else:
+            raise TypeError('Was expecting action functions.')
+        
     def translate_basicblock(self, block : ir.BasicBlock):
 
         insts = []
