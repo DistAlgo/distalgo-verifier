@@ -83,7 +83,6 @@ class PatternTranslator(utils.NodeVisitor):
         super().visit(node)
 
     def visit_Tuple(self, node: ir.Tuple):
-        self.constrains.append(tla_eq(TlaInstantiationExpr(TlaSymbol("Len"), [self.indexed_expr()]), TlaConstantExpr(len(node.operands))))
         self.stack.append(1)
         for pattern in node.operands:
             self.visit(pattern)
