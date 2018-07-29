@@ -1,0 +1,43 @@
+#should correspond to spec.da, but in actions.  should have no bugs.
+from random import randint
+from time import sleep
+
+class Proc(process):
+  def request():
+    if each(sent(('request', t2, _)), has= some(sent(('release', t3, _)), has= t3 >= t2)):
+      t = t + 1
+      send(('request', t, self), to=others)
+
+  def reply():
+    if some(received(('request', t2, p)), has= each(sent(('ack', t3, _), to=p), has= t3 < t2)):
+      t = max({t, t2})
+      send(('ack', t, p), to={p}) # Made recipient a set
+
+  def enter_cs():
+    if some(sent(('request', t1, _)), has= \
+        each(sent(('release', t2, _)), has= t2 < t1) and \
+        each(p in others, has= some(received(('ack', t2, _), from_= p), has= t2 >= t1)) and \
+        each(received(('request', t2, p)), has= (t1 < t2 or (t1 == t2 and self < p)) or some(received(('release', t3, _p)), has= t3 >= t2))):
+      if not in_cs: output('Enter CS')
+      in_cs = True
+  
+  def exit_cs():
+    if in_cs:
+      in_cs = False
+      output('Exit CS')
+      send(('release', t, self), to=others)
+
+  def release():
+    if some(received(('release', t2, _))): t = max({t, t2})
+
+  def setup(others:set):
+    self.in_cs = False
+    self.t = 0
+
+def main():
+  #config(NUM_PROCS= 2)
+  NUM_PROCS= 2
+  ps = new(Proc, num= NUM_PROCS)
+  for p in ps: setup(p, [ps - {p}])
+  start(ps)
+  #invariant(len(setof(p in ps, p.in_cs)) <= 1)

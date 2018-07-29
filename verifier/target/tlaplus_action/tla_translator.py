@@ -22,6 +22,8 @@ TlaOperatorMap = {
     dast.GtOp : TLA_GT,
     dast.LtOp : TLA_LT,
     dast.EqOp : TLA_EQ,
+    dast.GtEOp: TLA_GE,
+    dast.LtEOp: TLA_LE,
     dast.AndOp : TLA_AND,
     dast.OrOp : TLA_OR,
     dast.ModOp : TLA_MOD,
