@@ -271,7 +271,6 @@ class Action(object):
     def from_insts(self, insts, translator):
         exprs = []
         translate_insts_simple_one_block(exprs, insts, translator, False, self.next_name)
-        exprs = [self.check_pc()] + exprs
         self.tla = TlaDefinitionStmt(TlaSymbol(self.name), [TlaSymbol('self')], tla_and(exprs))
 
     def check_pc(self):

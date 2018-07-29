@@ -96,7 +96,8 @@ def send_action(need_sent=True):
 
 def yield_point_action(scope, expr, need_rcvd=True):
     timestamp = TlaIndexExpr(TlaIndexExpr(_("msg"), TlaConstantExpr(2)), TlaConstantExpr(1))
-    exprs = [except_expr_helper("clock", TlaBinaryExpr("+",
+    exprs = [tla_neq(apply_expr("msgQueue", "self"), TlaTupleExpr([])),
+             except_expr_helper("clock", TlaBinaryExpr("+",
                                                        TlaConstantExpr(1),
                                                        TlaIfExpr(tla_gt(timestamp, _("@")),
                                                                  timestamp,
@@ -113,12 +114,6 @@ def yield_point_action(scope, expr, need_rcvd=True):
     exprs.append(expr)
     return TlaDefinitionStmt(_(scope.gen_name("yield")),
                              [_("self")],
-                             tla_and([pc_is_expr(scope.gen_name('yield')),
-                                      tla_eq(TlaSymbol("atomic_barrier"), TlaConstantExpr(-1)),
                              TlaLetExpr(TlaDefinitionStmt(_("msg"), [],
                                                           inst_expr("Head", apply_expr("msgQueue", "self"))),
-                                        TlaIfExpr(tla_neq(apply_expr("msgQueue", "self"), TlaTupleExpr([])),
-                                                  tla_and(exprs),
-                                                  tla_and([
-                                                      tla_eq(TlaSymbol("atomic_barrier'"), TlaSymbol("self")),
-                                                      except_expr_helper("pc", apply_expr(scope.gen_name("yield_ret_pc"), "self"))])))]))
+                                        tla_and(exprs)))

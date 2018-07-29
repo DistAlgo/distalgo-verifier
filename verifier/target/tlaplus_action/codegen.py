@@ -29,7 +29,7 @@ class CodeGen(object):
         self.passmanager = passmanager
         self.translator = Translator(self)
 
-        self.names = ["pc", "msgQueue", "clock", "atomic_barrier"]
+        self.names = ["msgQueue", "clock"]
         if self.need_sent():
             self.names.append("sent")
         if self.need_rcvd():
@@ -48,8 +48,6 @@ class CodeGen(object):
 
                 names = set()
                 for function in module.functions:
-                    if function.scope.type == ScopeType.Process:
-                        names.add(function.scope.gen_name("yield_ret_pc"))
                     if isinstance(function.ast_node, dast.Program):
                         continue
                     if isinstance(function.ast_node, dast.ClassStmt):
@@ -59,9 +57,6 @@ class CodeGen(object):
                     # skip main for now
                     if function.scope.type == ScopeType.Main:
                         continue
-                    # add ret pc
-                    if function.scope.type == ScopeType.General:
-                        names.add(function.scope.gen_name("ret_pc"))
 
                     names |= gvpass.names[function]
 

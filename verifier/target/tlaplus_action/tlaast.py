@@ -132,7 +132,10 @@ class TlaAndOrExpr(TlaAST):
 
     def to_tla(self, indent=0):
         exprs = self.exprs if self.exprs else [TlaConstantExpr(True)]
-        return ("\n" + " " * indent).join(["{0} {1}".format(self.op, expr.to_tla(indent + len(self.op) + 1)) for expr in exprs])
+        if len(exprs) == 1:
+            return ("\n" + " " * indent).join(["{0}".format(exprs[0].to_tla(indent + 1))]) #Why +1?
+        else:
+            return ("\n" + " " * indent).join(["{0} {1}".format(self.op, expr.to_tla(indent + len(self.op) + 1)) for expr in exprs])
 
 class TlaBinaryExpr(TlaAST):
     _fields = ["lexpr", "rexpr"]
